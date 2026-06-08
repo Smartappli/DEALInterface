@@ -46,6 +46,8 @@ This first version provides:
 - module navigation for `DEALHost`, `DEALIot` and `DEALData`;
 - active module detail panels;
 - control-plane topology;
+- operator action queue with active-module focus;
+- module control profiles with operating facts and workflow cards;
 - shared workflow and activity sections;
 - runtime endpoint configuration ready for API integration.
 
