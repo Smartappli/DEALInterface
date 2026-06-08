@@ -10,9 +10,9 @@ import { OperatorQueue } from "./components/OperatorQueue";
 import { TopologyMap } from "./components/TopologyMap";
 import { moduleRuntimeConfig } from "./config/moduleRegistry";
 import { activityFeed, dashboardMetrics, dealModules, moduleControlProfiles, operatorActions } from "./data/dashboard";
-import type { ModuleKey } from "./types";
+import type { ActionPriority, ModuleKey } from "./types";
 
-const actionPriorityRank = {
+const actionPriorityRank: Record<ActionPriority, number> = {
   critical: 0,
   high: 1,
   normal: 2,
@@ -26,10 +26,12 @@ export default function App() {
   );
   const activeProfile = moduleControlProfiles[activeModule.key];
   const nextAction = useMemo(
-    () => [...operatorActions].sort((left, right) => actionPriorityRank[left.priority] - actionPriorityRank[right.priority])[0],
+    () =>
+      [...operatorActions].sort((left, right) => actionPriorityRank[left.priority] - actionPriorityRank[right.priority])[0] ??
+      null,
     [],
   );
-  const nextActionModule = dealModules.find((module) => module.key === nextAction.moduleKey);
+  const nextActionModule = nextAction ? dealModules.find((module) => module.key === nextAction.moduleKey) : undefined;
 
   return (
     <div className="app-shell">
@@ -58,10 +60,19 @@ export default function App() {
 
         <div className="sidebar-card">
           <span>Next operator action</span>
-          <strong>{nextAction.title}</strong>
-          <p>
-            {nextActionModule?.name} / {nextAction.due}. {nextAction.detail}
-          </p>
+          {nextAction ? (
+            <>
+              <strong>{nextAction.title}</strong>
+              <p>
+                {nextActionModule?.name} / {nextAction.due}. {nextAction.detail}
+              </p>
+            </>
+          ) : (
+            <>
+              <strong>No pending action</strong>
+              <p>All operator queues are clear across the current control plane.</p>
+            </>
+          )}
         </div>
       </aside>
 
