@@ -6,6 +6,8 @@ export type ActionPriority = "critical" | "high" | "normal";
 
 export type ActionState = "open" | "in_progress" | "blocked" | "scheduled";
 
+export type ProbeStatus = "online" | "degraded" | "attention";
+
 export interface DealModule {
   key: ModuleKey;
   name: string;
@@ -65,4 +67,22 @@ export interface ModuleControlProfile {
   slaTarget: string;
   escalation: string;
   workflows: ModuleWorkflow[];
+}
+
+export interface ModuleProbeResult {
+  id: string;
+  label: string;
+  url: string;
+  status: ProbeStatus;
+  httpStatus?: number;
+  responseTimeMs?: number;
+  detail: string;
+  checkedAt: string;
+}
+
+export interface ModuleConnection {
+  moduleKey: ModuleKey;
+  status: ProbeStatus;
+  checkedAt: string;
+  probes: ModuleProbeResult[];
 }

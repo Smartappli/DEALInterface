@@ -1,15 +1,19 @@
-﻿import type { ModuleRuntimeConfig } from "../config/moduleRegistry";
+import type { ModuleRuntimeConfig } from "../config/moduleRegistry";
 import { statusCopy } from "../lib/status";
-import type { DealModule } from "../types";
+import type { DealModule, ModuleConnection } from "../types";
 import { StatusPill } from "./StatusPill";
 
 interface ModuleDetailProps {
   module: DealModule;
   runtime: ModuleRuntimeConfig;
+  connection?: ModuleConnection;
 }
 
-export function ModuleDetail({ module, runtime }: ModuleDetailProps) {
+export function ModuleDetail({ module, runtime, connection }: ModuleDetailProps) {
   const healthUrl = `${runtime.apiBaseUrl}${runtime.healthPath}`;
+  const liveDetail = connection
+    ? `${connection.probes.filter((probe) => probe.status === "online").length}/${connection.probes.length} live probes healthy`
+    : "Waiting for first API probe";
 
   return (
     <section className="panel module-detail" aria-labelledby="module-detail-title">
@@ -24,8 +28,9 @@ export function ModuleDetail({ module, runtime }: ModuleDetailProps) {
       <p className="module-detail__summary">{statusCopy[module.status]}</p>
 
       <div className="runtime-card">
-        <span>Runtime endpoint</span>
+        <span>{connection ? "Live runtime endpoint" : "Runtime endpoint"}</span>
         <strong>{runtime.apiBaseUrl}</strong>
+        <small>{liveDetail}</small>
         <a href={healthUrl} rel="noreferrer" target="_blank">
           Open health probe
         </a>

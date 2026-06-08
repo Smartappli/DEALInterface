@@ -1,4 +1,4 @@
-﻿import type { CSSProperties } from "react";
+import type { CSSProperties } from "react";
 import { useMemo, useState } from "react";
 import { CommandCenter } from "./components/CommandCenter";
 import { ControlProfile } from "./components/ControlProfile";
@@ -7,9 +7,11 @@ import { MetricsGrid } from "./components/MetricsGrid";
 import { ModuleCard } from "./components/ModuleCard";
 import { ModuleDetail } from "./components/ModuleDetail";
 import { OperatorQueue } from "./components/OperatorQueue";
+import { ServiceConnections } from "./components/ServiceConnections";
 import { TopologyMap } from "./components/TopologyMap";
 import { moduleRuntimeConfig } from "./config/moduleRegistry";
 import { activityFeed, dashboardMetrics, dealModules, moduleControlProfiles, operatorActions } from "./data/dashboard";
+import { useModuleConnections } from "./hooks/useModuleConnections";
 import type { ActionPriority, ModuleKey } from "./types";
 
 const actionPriorityRank: Record<ActionPriority, number> = {
@@ -20,9 +22,18 @@ const actionPriorityRank: Record<ActionPriority, number> = {
 
 export default function App() {
   const [activeKey, setActiveKey] = useState<ModuleKey>("dealhost");
+  const { connections, isRefreshing, refresh } = useModuleConnections(moduleRuntimeConfig);
+  const liveModules = useMemo(
+    () =>
+      dealModules.map((module) => ({
+        ...module,
+        status: connections[module.key]?.status ?? module.status,
+      })),
+    [connections],
+  );
   const activeModule = useMemo(
-    () => dealModules.find((module) => module.key === activeKey) ?? dealModules[0],
-    [activeKey],
+    () => liveModules.find((module) => module.key === activeKey) ?? liveModules[0],
+    [activeKey, liveModules],
   );
   const activeProfile = moduleControlProfiles[activeModule.key];
   const nextAction = useMemo(
@@ -31,7 +42,7 @@ export default function App() {
       null,
     [],
   );
-  const nextActionModule = nextAction ? dealModules.find((module) => module.key === nextAction.moduleKey) : undefined;
+  const nextActionModule = nextAction ? liveModules.find((module) => module.key === nextAction.moduleKey) : undefined;
 
   return (
     <div className="app-shell">
@@ -45,7 +56,7 @@ export default function App() {
         </a>
 
         <nav className="module-nav" aria-label="Module navigation">
-          {dealModules.map((module) => (
+          {liveModules.map((module) => (
             <button
               className={module.key === activeKey ? "module-nav__item module-nav__item--active" : "module-nav__item"}
               key={module.key}
@@ -109,7 +120,7 @@ export default function App() {
             <h2 id="modules-title">Product surfaces remain isolated; management stays unified.</h2>
           </div>
           <div className="module-grid">
-            {dealModules.map((module, index) => (
+            {liveModules.map((module, index) => (
               <ModuleCard
                 isActive={module.key === activeKey}
                 key={module.key}
@@ -122,15 +133,28 @@ export default function App() {
         </section>
 
         <section className="dashboard-grid" id="control-plane">
-          <ModuleDetail module={activeModule} runtime={moduleRuntimeConfig[activeModule.key]} />
+          <ModuleDetail
+            connection={connections[activeModule.key]}
+            module={activeModule}
+            runtime={moduleRuntimeConfig[activeModule.key]}
+          />
+          <ServiceConnections
+            activeKey={activeKey}
+            connections={connections}
+            isRefreshing={isRefreshing}
+            modules={liveModules}
+            onRefresh={refresh}
+            onSelectModule={setActiveKey}
+            runtimes={moduleRuntimeConfig}
+          />
           <OperatorQueue
             actions={operatorActions}
             activeKey={activeKey}
-            modules={dealModules}
+            modules={liveModules}
             onSelectModule={setActiveKey}
           />
           <ControlProfile module={activeModule} profile={activeProfile} />
-          <TopologyMap activeKey={activeKey} modules={dealModules} />
+          <TopologyMap activeKey={activeKey} modules={liveModules} />
           <CommandCenter />
           <ActivityFeed items={activityFeed} />
         </section>
@@ -138,4 +162,3 @@ export default function App() {
     </div>
   );
 }
-
