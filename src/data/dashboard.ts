@@ -1,4 +1,4 @@
-﻿import type { ActivityItem, DashboardMetric, DealModule } from "../types";
+﻿import type { ActivityItem, DashboardMetric, DealModule, ModuleControlProfile, OperatorAction } from "../types";
 
 export const dealModules: DealModule[] = [
   {
@@ -57,7 +57,7 @@ export const dealModules: DealModule[] = [
 export const dashboardMetrics: DashboardMetric[] = [
   { label: "Managed modules", value: "3", detail: "single control plane" },
   { label: "Active tenants", value: "128", detail: "cross-module access" },
-  { label: "Open actions", value: "17", detail: "11 IoT, 4 Host, 2 Data" },
+  { label: "Open actions", value: "18", detail: "11 IoT, 5 Host, 2 Data" },
   { label: "Automation rate", value: "84%", detail: "routine tasks covered" },
 ];
 
@@ -91,3 +91,168 @@ export const activityFeed: ActivityItem[] = [
     severity: "attention",
   },
 ];
+
+export const operatorActions: OperatorAction[] = [
+  {
+    id: "iot-ingest-scale",
+    moduleKey: "dealiot",
+    title: "Scale telemetry partitions",
+    detail: "Increase hot partitions before the 21:00 CET device reporting window.",
+    owner: "IoT operations",
+    due: "Today 20:30",
+    priority: "critical",
+    state: "open",
+  },
+  {
+    id: "host-release-window",
+    moduleKey: "dealhost",
+    title: "Approve runtime release window",
+    detail: "Confirm gateway drain plan for the APISIX route promotion batch.",
+    owner: "Platform team",
+    due: "Tomorrow 09:00",
+    priority: "high",
+    state: "scheduled",
+  },
+  {
+    id: "data-export-policy",
+    moduleKey: "dealdata",
+    title: "Review external export request",
+    detail: "Finance workspace asks for temporary export access on governed datasets.",
+    owner: "Data platform",
+    due: "Today 17:00",
+    priority: "high",
+    state: "blocked",
+  },
+  {
+    id: "iot-edge-rollout",
+    moduleKey: "dealiot",
+    title: "Validate edge policy rollout",
+    detail: "Pilot group is healthy; approve rollout to the remaining device cohorts.",
+    owner: "IoT operations",
+    due: "Today 18:45",
+    priority: "high",
+    state: "in_progress",
+  },
+  {
+    id: "host-domain-renewal",
+    moduleKey: "dealhost",
+    title: "Renew tenant domain certificate",
+    detail: "Two customer domains enter certificate renewal window this week.",
+    owner: "Platform team",
+    due: "Friday 12:00",
+    priority: "normal",
+    state: "open",
+  },
+  {
+    id: "data-backfill",
+    moduleKey: "dealdata",
+    title: "Schedule ingestion backfill",
+    detail: "Re-run failed billing partition after warehouse maintenance is complete.",
+    owner: "Data platform",
+    due: "Tomorrow 14:00",
+    priority: "normal",
+    state: "scheduled",
+  },
+];
+
+export const moduleControlProfiles: Record<DealModule["key"], ModuleControlProfile> = {
+  dealhost: {
+    moduleKey: "dealhost",
+    environment: "Production gateway cluster",
+    releaseWindow: "Tue / Thu 22:00 CET",
+    slaTarget: "99.95% public route availability",
+    escalation: "Platform on-call",
+    workflows: [
+      {
+        id: "host-deploy",
+        title: "Deploy hosted application",
+        description: "Validate tenant quota, reserve runtime capacity and promote the gateway route.",
+        cadence: "On demand",
+        automation: "70% automated",
+        requiredRoles: ["Release manager", "Tenant admin"],
+      },
+      {
+        id: "host-gateway",
+        title: "Audit gateway routes",
+        description: "Compare desired routes with standalone APISIX config and flag drift.",
+        cadence: "Every 6 h",
+        automation: "API-ready",
+        requiredRoles: ["Platform operator"],
+      },
+      {
+        id: "host-secrets",
+        title: "Rotate runtime secret",
+        description: "Coordinate service account rotation with deployment freeze windows.",
+        cadence: "Monthly",
+        automation: "Manual approval",
+        requiredRoles: ["Security officer"],
+      },
+    ],
+  },
+  dealiot: {
+    moduleKey: "dealiot",
+    environment: "Telemetry intake and edge control",
+    releaseWindow: "Daily 19:00 CET",
+    slaTarget: "99.9% event ingestion continuity",
+    escalation: "IoT incident commander",
+    workflows: [
+      {
+        id: "iot-capacity",
+        title: "Scale telemetry intake",
+        description: "Inspect lag, assign partitions and trigger intake capacity changes.",
+        cadence: "Peak windows",
+        automation: "55% automated",
+        requiredRoles: ["IoT operator", "SRE"],
+      },
+      {
+        id: "iot-quarantine",
+        title: "Quarantine device cohort",
+        description: "Move anomalous devices to restricted policy while preserving audit evidence.",
+        cadence: "Incident driven",
+        automation: "Manual approval",
+        requiredRoles: ["IoT operator", "Support lead"],
+      },
+      {
+        id: "iot-edge",
+        title: "Approve edge update",
+        description: "Check pilot telemetry and authorize staged rollout to edge agents.",
+        cadence: "Weekly",
+        automation: "API-ready",
+        requiredRoles: ["Release manager"],
+      },
+    ],
+  },
+  dealdata: {
+    moduleKey: "dealdata",
+    environment: "Governed data platform",
+    releaseWindow: "Mon / Wed 06:00 CET",
+    slaTarget: "96% dataset freshness within SLA",
+    escalation: "Data platform owner",
+    workflows: [
+      {
+        id: "data-publish",
+        title: "Publish governed dataset",
+        description: "Validate lineage, access policy and catalog metadata before publication.",
+        cadence: "On demand",
+        automation: "65% automated",
+        requiredRoles: ["Data steward", "Policy approver"],
+      },
+      {
+        id: "data-backfill",
+        title: "Run pipeline backfill",
+        description: "Schedule replay windows and monitor freshness recovery.",
+        cadence: "Incident driven",
+        automation: "API-ready",
+        requiredRoles: ["Data operator"],
+      },
+      {
+        id: "data-export",
+        title: "Approve external export",
+        description: "Route exceptional export requests through policy and audit controls.",
+        cadence: "As requested",
+        automation: "Manual approval",
+        requiredRoles: ["Data steward", "Security officer"],
+      },
+    ],
+  },
+};

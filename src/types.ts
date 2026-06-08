@@ -2,6 +2,10 @@
 
 export type ModuleHealth = "online" | "degraded" | "attention";
 
+export type ActionPriority = "critical" | "high" | "normal";
+
+export type ActionState = "open" | "in_progress" | "blocked" | "scheduled";
+
 export interface DealModule {
   key: ModuleKey;
   name: string;
@@ -32,4 +36,33 @@ export interface ActivityItem {
   detail: string;
   time: string;
   severity: ModuleHealth;
+}
+
+export interface OperatorAction {
+  id: string;
+  moduleKey: ModuleKey;
+  title: string;
+  detail: string;
+  owner: string;
+  due: string;
+  priority: ActionPriority;
+  state: ActionState;
+}
+
+export interface ModuleWorkflow {
+  id: string;
+  title: string;
+  description: string;
+  cadence: string;
+  automation: string;
+  requiredRoles: string[];
+}
+
+export interface ModuleControlProfile {
+  moduleKey: ModuleKey;
+  environment: string;
+  releaseWindow: string;
+  slaTarget: string;
+  escalation: string;
+  workflows: ModuleWorkflow[];
 }
