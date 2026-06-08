@@ -1,14 +1,22 @@
 ﻿import type { CSSProperties } from "react";
 import { useMemo, useState } from "react";
 import { CommandCenter } from "./components/CommandCenter";
+import { ControlProfile } from "./components/ControlProfile";
 import { ActivityFeed } from "./components/ActivityFeed";
 import { MetricsGrid } from "./components/MetricsGrid";
 import { ModuleCard } from "./components/ModuleCard";
 import { ModuleDetail } from "./components/ModuleDetail";
+import { OperatorQueue } from "./components/OperatorQueue";
 import { TopologyMap } from "./components/TopologyMap";
 import { moduleRuntimeConfig } from "./config/moduleRegistry";
-import { activityFeed, dashboardMetrics, dealModules } from "./data/dashboard";
+import { activityFeed, dashboardMetrics, dealModules, moduleControlProfiles, operatorActions } from "./data/dashboard";
 import type { ModuleKey } from "./types";
+
+const actionPriorityRank = {
+  critical: 0,
+  high: 1,
+  normal: 2,
+};
 
 export default function App() {
   const [activeKey, setActiveKey] = useState<ModuleKey>("dealhost");
@@ -16,6 +24,12 @@ export default function App() {
     () => dealModules.find((module) => module.key === activeKey) ?? dealModules[0],
     [activeKey],
   );
+  const activeProfile = moduleControlProfiles[activeModule.key];
+  const nextAction = useMemo(
+    () => [...operatorActions].sort((left, right) => actionPriorityRank[left.priority] - actionPriorityRank[right.priority])[0],
+    [],
+  );
+  const nextActionModule = dealModules.find((module) => module.key === nextAction.moduleKey);
 
   return (
     <div className="app-shell">
@@ -44,8 +58,10 @@ export default function App() {
 
         <div className="sidebar-card">
           <span>Next operator action</span>
-          <strong>Review IoT ingestion capacity</strong>
-          <p>Telemetry lag is the only degraded signal in the current control plane.</p>
+          <strong>{nextAction.title}</strong>
+          <p>
+            {nextActionModule?.name} / {nextAction.due}. {nextAction.detail}
+          </p>
         </div>
       </aside>
 
@@ -96,6 +112,13 @@ export default function App() {
 
         <section className="dashboard-grid" id="control-plane">
           <ModuleDetail module={activeModule} runtime={moduleRuntimeConfig[activeModule.key]} />
+          <OperatorQueue
+            actions={operatorActions}
+            activeKey={activeKey}
+            modules={dealModules}
+            onSelectModule={setActiveKey}
+          />
+          <ControlProfile module={activeModule} profile={activeProfile} />
           <TopologyMap activeKey={activeKey} modules={dealModules} />
           <CommandCenter />
           <ActivityFeed items={activityFeed} />
