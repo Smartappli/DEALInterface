@@ -1,4 +1,5 @@
-﻿import type { CSSProperties } from "react";
+import type { CSSProperties } from "react";
+import { useI18n } from "../i18n/I18nProvider";
 import type { DealModule, ModuleKey } from "../types";
 import { StatusPill } from "./StatusPill";
 
@@ -10,6 +11,8 @@ interface ModuleCardProps {
 }
 
 export function ModuleCard({ module, isActive, onSelect, order }: ModuleCardProps) {
+  const { t } = useI18n();
+
   return (
     <button
       className={`module-card reveal ${isActive ? "module-card--active" : ""}`}
@@ -23,7 +26,7 @@ export function ModuleCard({ module, isActive, onSelect, order }: ModuleCardProp
         <StatusPill status={module.status} />
       </div>
       <p>{module.summary}</p>
-      <div className="module-card__capabilities" aria-label={`${module.name} capabilities`}>
+      <div className="module-card__capabilities" aria-label={t("module.capabilitiesAria", { module: module.name })}>
         {module.capabilities.slice(0, 3).map((capability) => (
           <span key={capability}>{capability}</span>
         ))}
