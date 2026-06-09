@@ -1,7 +1,13 @@
 import type { ModuleRuntimeConfig } from "../config/moduleRegistry";
-import { statusCopy } from "../lib/status";
+import { useI18n } from "../i18n/I18nProvider";
 import type { DealModule, ModuleConnection } from "../types";
 import { StatusPill } from "./StatusPill";
+
+const statusCopyKeys = {
+  online: "status.copyOnline",
+  degraded: "status.copyDegraded",
+  attention: "status.copyAttention",
+} as const;
 
 interface ModuleDetailProps {
   module: DealModule;
@@ -10,29 +16,33 @@ interface ModuleDetailProps {
 }
 
 export function ModuleDetail({ module, runtime, connection }: ModuleDetailProps) {
+  const { t } = useI18n();
   const healthUrl = `${runtime.apiBaseUrl}${runtime.healthPath}`;
   const liveDetail = connection
-    ? `${connection.probes.filter((probe) => probe.status === "online").length}/${connection.probes.length} live probes healthy`
-    : "Waiting for first API probe";
+    ? t("module.liveProbesHealthy", {
+        online: connection.probes.filter((probe) => probe.status === "online").length,
+        total: connection.probes.length,
+      })
+    : t("module.waitingForProbe");
 
   return (
     <section className="panel module-detail" aria-labelledby="module-detail-title">
       <div className="panel__header module-detail__header">
         <div>
-          <span className="section-kicker">Selected module</span>
+          <span className="section-kicker">{t("module.selected")}</span>
           <h2 id="module-detail-title">{module.name}</h2>
         </div>
         <StatusPill status={module.status} />
       </div>
 
-      <p className="module-detail__summary">{statusCopy[module.status]}</p>
+      <p className="module-detail__summary">{t(statusCopyKeys[module.status])}</p>
 
       <div className="runtime-card">
-        <span>{connection ? "Live runtime endpoint" : "Runtime endpoint"}</span>
+        <span>{connection ? t("module.liveEndpoint") : t("module.runtimeEndpoint")}</span>
         <strong>{runtime.apiBaseUrl}</strong>
         <small>{liveDetail}</small>
         <a href={healthUrl} rel="noreferrer" target="_blank">
-          Open health probe
+          {t("module.openHealthProbe")}
         </a>
       </div>
 
@@ -48,7 +58,7 @@ export function ModuleDetail({ module, runtime, connection }: ModuleDetailProps)
 
       <div className="detail-columns">
         <div>
-          <h3>Managed capabilities</h3>
+          <h3>{t("module.managedCapabilities")}</h3>
           <ul>
             {module.capabilities.map((capability) => (
               <li key={capability}>{capability}</li>
@@ -56,7 +66,7 @@ export function ModuleDetail({ module, runtime, connection }: ModuleDetailProps)
           </ul>
         </div>
         <div>
-          <h3>Connected systems</h3>
+          <h3>{t("module.connectedSystems")}</h3>
           <ul>
             {module.integrations.map((integration) => (
               <li key={integration}>{integration}</li>
