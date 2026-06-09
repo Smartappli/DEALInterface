@@ -1,4 +1,6 @@
 import type { ModuleRuntimeConfig } from "../config/moduleRegistry";
+import { useI18n } from "../i18n/I18nProvider";
+import type { MessageKey } from "../i18n/messages";
 import type { DealModule, ModuleConnection, ModuleKey, ModuleProbeResult, ProbeStatus } from "../types";
 import { StatusPill } from "./StatusPill";
 
@@ -14,15 +16,15 @@ interface ServiceConnectionsProps {
   onSelectModule: (key: ModuleKey) => void;
 }
 
-const probeStatusLabels: Record<ProbeStatus, string> = {
-  online: "Online",
-  degraded: "Degraded",
-  attention: "Offline",
+const probeStatusLabels: Record<ProbeStatus, MessageKey> = {
+  online: "service.statusOnline",
+  degraded: "service.statusDegraded",
+  attention: "service.statusAttention",
 };
 
 function formatCheckedAt(value?: string) {
   if (!value) {
-    return "pending";
+    return undefined;
   }
 
   return new Date(value).toLocaleTimeString([], {
@@ -45,6 +47,7 @@ export function ServiceConnections({
   onRefresh,
   onSelectModule,
 }: ServiceConnectionsProps) {
+  const { t } = useI18n();
   const activeModule = modules.find((module) => module.key === activeKey) ?? modules[0];
   const activeConnection = connections[activeKey];
   const activeRuntime = runtimes[activeKey];
@@ -53,19 +56,20 @@ export function ServiceConnections({
     <section className="panel service-connections" aria-labelledby="service-connections-title">
       <div className="panel__header">
         <div>
-          <span className="section-kicker">Live integrations</span>
-          <h2 id="service-connections-title">Connected module APIs</h2>
+          <span className="section-kicker">{t("service.kicker")}</span>
+          <h2 id="service-connections-title">{t("service.connectedApis")}</h2>
         </div>
         <button className="refresh-button" disabled={isRefreshing} onClick={onRefresh} type="button">
-          {isRefreshing ? "Checking" : "Refresh"}
+          {isRefreshing ? t("service.checking") : t("service.refresh")}
         </button>
       </div>
 
-      <div className="connection-overview" aria-label="Module connection overview">
+      <div className="connection-overview" aria-label={t("service.overviewAria")}>
         {modules.map((module) => {
           const connection = connections[module.key];
           const probeTotal = runtimes[module.key].probes.length;
           const onlineTotal = connection ? countOnline(connection.probes) : 0;
+          const checkedAt = formatCheckedAt(connection?.checkedAt) ?? t("service.pending");
 
           return (
             <button
@@ -75,39 +79,41 @@ export function ServiceConnections({
               type="button"
             >
               <span>{module.name}</span>
-              {connection ? <StatusPill status={connection.status} /> : <strong>Checking</strong>}
-              <small>
-                {onlineTotal}/{probeTotal} probes / {formatCheckedAt(connection?.checkedAt)}
-              </small>
+              {connection ? <StatusPill status={connection.status} /> : <strong>{t("service.waitingTile")}</strong>}
+              <small>{t("service.probeOverview", { online: onlineTotal, total: probeTotal, checkedAt })}</small>
             </button>
           );
         })}
       </div>
 
-      <div className="probe-list" aria-label={`${activeModule.name} live endpoints`}>
+      <div className="probe-list" aria-label={t("service.endpointListAria", { module: activeModule.name })}>
         <div className="probe-list__header">
-          <h3>{activeModule.name} endpoints</h3>
+          <h3>{t("service.endpoints", { module: activeModule.name })}</h3>
           <span>{activeRuntime.apiBaseUrl}</span>
         </div>
 
-        {(activeConnection?.probes ?? []).map((probe) => (
-          <article className={`probe-card probe-card--${probe.status}`} key={probe.id}>
-            <div>
-              <span>{probe.label}</span>
-              <a href={probe.url} rel="noreferrer" target="_blank">
-                {probe.url}
-              </a>
-            </div>
-            <div className="probe-card__status">
-              <strong>{probeStatusLabels[probe.status]}</strong>
-              <small>
-                {probe.httpStatus ? `HTTP ${probe.httpStatus}` : "network"} /{" "}
-                {probe.responseTimeMs ? `${probe.responseTimeMs} ms` : "no response"}
-              </small>
-            </div>
-            <p>{probe.detail}</p>
-          </article>
-        ))}
+        {(activeConnection?.probes ?? []).map((probe) => {
+          const transport = probe.httpStatus ? t("service.httpStatus", { status: probe.httpStatus }) : t("service.network");
+          const timing = probe.responseTimeMs
+            ? t("service.responseMs", { ms: probe.responseTimeMs })
+            : t("service.noResponse");
+
+          return (
+            <article className={`probe-card probe-card--${probe.status}`} key={probe.id}>
+              <div>
+                <span>{probe.label}</span>
+                <a href={probe.url} rel="noreferrer" target="_blank">
+                  {probe.url}
+                </a>
+              </div>
+              <div className="probe-card__status">
+                <strong>{t(probeStatusLabels[probe.status])}</strong>
+                <small>{t("service.probeTransport", { transport, timing })}</small>
+              </div>
+              <p>{probe.detail}</p>
+            </article>
+          );
+        })}
 
         {!activeConnection &&
           activeRuntime.probes.map((probe) => {
@@ -122,10 +128,10 @@ export function ServiceConnections({
                   </a>
                 </div>
                 <div className="probe-card__status">
-                  <strong>Pending</strong>
-                  <small>waiting for first check</small>
+                  <strong>{t("service.pending")}</strong>
+                  <small>{t("service.waitingCheck")}</small>
                 </div>
-                <p>The interface will probe this endpoint automatically.</p>
+                <p>{t("service.pendingDetail")}</p>
               </article>
             );
           })}
