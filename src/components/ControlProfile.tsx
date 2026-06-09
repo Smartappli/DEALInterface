@@ -1,4 +1,5 @@
 import type { CSSProperties } from "react";
+import { useI18n } from "../i18n/I18nProvider";
 import type { DealModule, ModuleControlProfile } from "../types";
 
 interface ControlProfileProps {
@@ -7,11 +8,12 @@ interface ControlProfileProps {
 }
 
 export function ControlProfile({ module, profile }: ControlProfileProps) {
+  const { t } = useI18n();
   const profileFacts = [
-    { label: "Environment", value: profile.environment },
-    { label: "Release window", value: profile.releaseWindow },
-    { label: "SLA target", value: profile.slaTarget },
-    { label: "Escalation", value: profile.escalation },
+    { label: t("control.environment"), value: profile.environment },
+    { label: t("control.releaseWindow"), value: profile.releaseWindow },
+    { label: t("control.slaTarget"), value: profile.slaTarget },
+    { label: t("control.escalation"), value: profile.escalation },
   ];
 
   return (
@@ -22,8 +24,8 @@ export function ControlProfile({ module, profile }: ControlProfileProps) {
     >
       <div className="panel__header">
         <div>
-          <span className="section-kicker">Control profile</span>
-          <h2 id="control-profile-title">{module.name} operating model</h2>
+          <span className="section-kicker">{t("control.kicker")}</span>
+          <h2 id="control-profile-title">{t("control.operatingModel", { module: module.name })}</h2>
         </div>
         <span className="control-profile__owner">{module.owner}</span>
       </div>
@@ -37,7 +39,7 @@ export function ControlProfile({ module, profile }: ControlProfileProps) {
         ))}
       </div>
 
-      <div className="workflow-list" aria-label={`${module.name} workflows`}>
+      <div className="workflow-list" aria-label={t("control.workflowsAria", { module: module.name })}>
         {profile.workflows.map((workflow) => (
           <article className="workflow-card" key={workflow.id}>
             <div>
@@ -47,7 +49,7 @@ export function ControlProfile({ module, profile }: ControlProfileProps) {
             </div>
             <div className="workflow-card__footer">
               <strong>{workflow.automation}</strong>
-              <div aria-label="Required roles">
+              <div aria-label={t("control.requiredRoles")}>
                 {workflow.requiredRoles.map((role) => (
                   <span key={role}>{role}</span>
                 ))}

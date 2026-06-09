@@ -1,32 +1,37 @@
-﻿const commandGroups = [
+import { useI18n } from "../i18n/I18nProvider";
+import type { MessageKey } from "../i18n/messages";
+
+const commandGroups: Array<{ titleKey: MessageKey; itemKeys: MessageKey[] }> = [
   {
-    title: "Access",
-    items: ["Tenant onboarding", "Role approvals", "Service accounts"],
+    titleKey: "command.access",
+    itemKeys: ["command.tenantOnboarding", "command.roleApprovals", "command.serviceAccounts"],
   },
   {
-    title: "Operations",
-    items: ["Incident queue", "SLA checks", "Release windows"],
+    titleKey: "command.operations",
+    itemKeys: ["command.incidentQueue", "command.slaChecks", "command.releaseWindows"],
   },
   {
-    title: "Governance",
-    items: ["Audit exports", "Usage reports", "Policy exceptions"],
+    titleKey: "command.governance",
+    itemKeys: ["command.auditExports", "command.usageReports", "command.policyExceptions"],
   },
 ];
 
 export function CommandCenter() {
+  const { t } = useI18n();
+
   return (
     <section className="panel command-center" aria-labelledby="command-title">
       <div className="panel__header">
-        <span className="section-kicker">Control plane</span>
-        <h2 id="command-title">Shared management workflows</h2>
+        <span className="section-kicker">{t("command.kicker")}</span>
+        <h2 id="command-title">{t("command.title")}</h2>
       </div>
       <div className="command-grid">
         {commandGroups.map((group) => (
-          <article key={group.title}>
-            <h3>{group.title}</h3>
+          <article key={group.titleKey}>
+            <h3>{t(group.titleKey)}</h3>
             <ul>
-              {group.items.map((item) => (
-                <li key={item}>{item}</li>
+              {group.itemKeys.map((itemKey) => (
+                <li key={itemKey}>{t(itemKey)}</li>
               ))}
             </ul>
           </article>

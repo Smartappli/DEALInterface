@@ -1,15 +1,18 @@
-﻿import type { ActivityItem } from "../types";
+import { useI18n } from "../i18n/I18nProvider";
+import type { ActivityItem } from "../types";
 
 interface ActivityFeedProps {
   items: ActivityItem[];
 }
 
 export function ActivityFeed({ items }: ActivityFeedProps) {
+  const { t } = useI18n();
+
   return (
     <section className="panel activity-panel" aria-labelledby="activity-title">
       <div className="panel__header">
-        <span className="section-kicker">Operations</span>
-        <h2 id="activity-title">Recent control-plane events</h2>
+        <span className="section-kicker">{t("activity.kicker")}</span>
+        <h2 id="activity-title">{t("activity.title")}</h2>
       </div>
       <div className="activity-list">
         {items.map((item) => (
@@ -18,7 +21,7 @@ export function ActivityFeed({ items }: ActivityFeedProps) {
             <div>
               <div className="activity-item__meta">
                 <strong>{item.module}</strong>
-                <span>{item.time} ago</span>
+                <span>{t("activity.ago", { time: item.time })}</span>
               </div>
               <h3>{item.title}</h3>
               <p>{item.detail}</p>
