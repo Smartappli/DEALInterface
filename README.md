@@ -25,6 +25,20 @@ npm run dev
 
 The app starts on `http://127.0.0.1:5173`.
 
+## Tests and CI
+
+```bash
+npm run typecheck
+npm run test:unit
+npm run test:integration
+npm run build
+```
+
+Unit tests cover runtime API probe classification and authentication behavior. Integration tests render
+the React console with mocked DEALHost, DEALIoT and DEALData endpoints to verify that live connection
+state reaches the UI. GitHub Actions runs the same typecheck, test and build commands on pull requests
+and pushes to `main`.
+
 ## Local module services
 
 Start the module APIs in their own repositories before expecting live probes to pass:
