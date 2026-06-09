@@ -65,6 +65,7 @@ function mockModuleFetch(overrides: Record<string, MockPayload | MockPayload[]> 
 }
 
 afterEach(() => {
+  window.localStorage.clear();
   vi.unstubAllGlobals();
 });
 
@@ -179,5 +180,51 @@ describe("App live module integrations", () => {
 
     expect(screen.getByText("/dealhost/api/gateway/health/")).toBeInTheDocument();
     expect(screen.getByText("1/1 live probes healthy")).toBeInTheDocument();
+  });
+
+  it("offers every DEALWebsite language and persists the selected interface language", async () => {
+    const user = userEvent.setup();
+    const fetchMock = mockModuleFetch();
+
+    render(<App />);
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(6));
+
+    const languageSelect = screen.getByRole("combobox", { name: "Interface language" });
+    const languageOptions = within(languageSelect).getAllByRole("option");
+
+    expect(languageOptions.map((option) => option.getAttribute("value"))).toEqual([
+      "en-US",
+      "bg",
+      "hr",
+      "cs",
+      "da",
+      "nl",
+      "et",
+      "fi",
+      "fr",
+      "de",
+      "el",
+      "hu",
+      "ga",
+      "it",
+      "lv",
+      "lt",
+      "mt",
+      "pl",
+      "pt",
+      "ro",
+      "sk",
+      "sl",
+      "es",
+      "sv",
+    ]);
+
+    await user.selectOptions(languageSelect, "fr");
+
+    expect(screen.getByRole("heading", { name: "Pilotez DEALHost, DEALIot et DEALData depuis une interface unifiee." })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Rafraichir" })).toBeInTheDocument();
+    expect(document.documentElement.lang).toBe("fr");
+    expect(window.localStorage.getItem("dealinterface.language")).toBe("fr");
   });
 });

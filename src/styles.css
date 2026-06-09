@@ -120,6 +120,41 @@ a {
   font-size: 0.75rem;
 }
 
+.language-selector {
+  display: grid;
+  gap: 0.45rem;
+  padding: 0.85rem;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 1rem;
+}
+
+.language-selector span {
+  color: #f8c75b;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.language-selector select {
+  width: 100%;
+  min-height: 2.55rem;
+  padding: 0 0.7rem;
+  color: #172019;
+  background: #fff9eb;
+  border: 0;
+  border-radius: 0.75rem;
+  font: inherit;
+  font-size: 0.88rem;
+}
+
+.language-selector small {
+  color: rgba(248, 243, 231, 0.58);
+  font-size: 0.72rem;
+  line-height: 1.35;
+}
+
 .module-nav {
   display: grid;
   gap: 0.55rem;

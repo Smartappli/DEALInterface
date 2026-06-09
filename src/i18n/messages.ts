@@ -102,7 +102,7 @@ export const englishMessages = {
 
 export type MessageKey = keyof typeof englishMessages;
 export type MessageParams = Record<string, string | number>;
-export type MessageDictionary = typeof englishMessages;
+export type MessageDictionary = Record<MessageKey, string>;
 export type PartialMessageDictionary = Partial<MessageDictionary>;
 
 export const localizedMessages: Partial<Record<SupportedLanguageCode, PartialMessageDictionary>> = {
@@ -120,7 +120,7 @@ export const localizedMessages: Partial<Record<SupportedLanguageCode, PartialMes
     "command.kicker": "Plan de controle",
     "command.operations": "Operations",
     "command.policyExceptions": "Exceptions de politique",
-    "command.releaseWindows": "Fenieres de livraison",
+    "command.releaseWindows": "Fenetres de livraison",
     "command.roleApprovals": "Approbations de roles",
     "command.serviceAccounts": "Comptes de service",
     "command.slaChecks": "Controles SLA",
