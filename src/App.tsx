@@ -9,9 +9,11 @@ import { ModuleDetail } from "./components/ModuleDetail";
 import { OperatorQueue } from "./components/OperatorQueue";
 import { ServiceConnections } from "./components/ServiceConnections";
 import { TopologyMap } from "./components/TopologyMap";
+import { LanguageSelector } from "./components/LanguageSelector";
 import { moduleRuntimeConfig } from "./config/moduleRegistry";
 import { activityFeed, dashboardMetrics, dealModules, moduleControlProfiles, operatorActions } from "./data/dashboard";
 import { useModuleConnections } from "./hooks/useModuleConnections";
+import { I18nProvider, useI18n } from "./i18n/I18nProvider";
 import type { ActionPriority, ModuleKey } from "./types";
 
 const actionPriorityRank: Record<ActionPriority, number> = {
@@ -21,6 +23,15 @@ const actionPriorityRank: Record<ActionPriority, number> = {
 };
 
 export default function App() {
+  return (
+    <I18nProvider>
+      <AppContent />
+    </I18nProvider>
+  );
+}
+
+function AppContent() {
+  const { t } = useI18n();
   const [activeKey, setActiveKey] = useState<ModuleKey>("dealhost");
   const { connections, isRefreshing, refresh } = useModuleConnections(moduleRuntimeConfig);
   const liveModules = useMemo(
@@ -46,14 +57,16 @@ export default function App() {
 
   return (
     <div className="app-shell">
-      <aside className="sidebar" aria-label="DEALInterface navigation">
-        <a className="brand" href="#top" aria-label="DEALInterface home">
+      <aside className="sidebar" aria-label={t("app.navigationAria")}>
+        <a className="brand" href="#top" aria-label={t("app.homeAria")}>
           <span className="brand__mark">DI</span>
           <span>
             <strong>DEALInterface</strong>
-            <small>Unified control plane</small>
+            <small>{t("app.brandSubtitle")}</small>
           </span>
         </a>
+
+        <LanguageSelector />
 
         <nav className="module-nav" aria-label="Module navigation">
           {liveModules.map((module) => (
@@ -70,7 +83,7 @@ export default function App() {
         </nav>
 
         <div className="sidebar-card">
-          <span>Next operator action</span>
+          <span>{t("operator.next")}</span>
           {nextAction ? (
             <>
               <strong>{nextAction.title}</strong>
@@ -80,8 +93,8 @@ export default function App() {
             </>
           ) : (
             <>
-              <strong>No pending action</strong>
-              <p>All operator queues are clear across the current control plane.</p>
+              <strong>{t("operator.noPending")}</strong>
+              <p>{t("operator.noPendingDetail")}</p>
             </>
           )}
         </div>
@@ -90,22 +103,19 @@ export default function App() {
       <main className="main-surface" id="top">
         <section className="hero">
           <div className="hero__content reveal" style={{ "--order": 0 } as CSSProperties}>
-            <span className="section-kicker">Suite management</span>
-            <h1>Manage DEALHost, DEALIot and DEALData from one deliberate interface.</h1>
-            <p>
-              DEALInterface keeps product modules independent while centralizing identity, operations,
-              governance and support workflows in a single console.
-            </p>
-            <div className="hero__actions" aria-label="Primary actions">
-              <a href="#modules">Inspect modules</a>
-              <a href="#control-plane">Open workflows</a>
+            <span className="section-kicker">{t("hero.kicker")}</span>
+            <h1>{t("hero.title")}</h1>
+            <p>{t("hero.lede")}</p>
+            <div className="hero__actions" aria-label={t("hero.actionsAria")}>
+              <a href="#modules">{t("hero.inspectModules")}</a>
+              <a href="#control-plane">{t("hero.openWorkflows")}</a>
             </div>
           </div>
 
           <div className="hero-console reveal" style={{ "--order": 1 } as CSSProperties}>
-            <span>Control plane readiness</span>
+            <span>{t("hero.consoleTitle")}</span>
             <strong>84%</strong>
-            <p>Shared access, audit and operations surfaces are ready for API integration.</p>
+            <p>{t("hero.consoleDescription")}</p>
             <div className="hero-console__bar" aria-hidden="true">
               <span />
             </div>
@@ -116,8 +126,8 @@ export default function App() {
 
         <section className="module-section" id="modules" aria-labelledby="modules-title">
           <div className="section-heading">
-            <span className="section-kicker">Modules</span>
-            <h2 id="modules-title">Product surfaces remain isolated; management stays unified.</h2>
+            <span className="section-kicker">{t("modules.kicker")}</span>
+            <h2 id="modules-title">{t("modules.title")}</h2>
           </div>
           <div className="module-grid">
             {liveModules.map((module, index) => (
