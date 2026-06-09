@@ -8,6 +8,10 @@
     "dev": "vite",
     "build": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.node.json && vite build",
     "preview": "vite preview",
+    "test": "vitest run",
+    "test:integration": "vitest run \"src/**/*.integration.test.{ts,tsx}\"",
+    "test:unit": "vitest run \"src/**/*.unit.test.{ts,tsx}\"",
+    "test:watch": "vitest",
     "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.node.json"
   },
   "dependencies": {
@@ -15,10 +19,17 @@
     "react-dom": "^19.2.7"
   },
   "devDependencies": {
+    "@testing-library/dom": "^10.4.1",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.1",
+    "@types/node": "^25.9.2",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.2",
+    "jsdom": "^29.1.1",
     "typescript": "^6.0.3",
-    "vite": "^8.0.16"
+    "vite": "^8.0.16",
+    "vitest": "^4.1.8"
   }
 }
