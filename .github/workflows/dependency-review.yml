@@ -19,3 +19,6 @@ jobs:
 
       - name: Review dependency changes
         uses: actions/dependency-review-action@v4
+        with:
+          fail-on-severity: low
+          retry-on-snapshot-warnings: true
