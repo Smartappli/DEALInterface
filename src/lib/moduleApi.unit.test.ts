@@ -11,6 +11,12 @@ function jsonResponse(payload: unknown, status = 200) {
   });
 }
 
+function textResponse(payload: string, status = 200) {
+  return new Response(payload, {
+    status,
+  });
+}
+
 function runtimeConfig(overrides: Partial<ModuleRuntimeConfig> = {}): ModuleRuntimeConfig {
   return {
     key: "dealiot",
@@ -122,6 +128,238 @@ describe("fetchModuleConnection", () => {
     expect(connection.probes[0]).toMatchObject({
       status: "attention",
       detail: "connection refused",
+    });
+  });
+
+  it("marks a runtime with no configured probes as attention", async () => {
+    const fetchMock = vi.fn<typeof fetch>();
+    vi.stubGlobal("fetch", fetchMock);
+
+    const connection = await fetchModuleConnection(
+      runtimeConfig({
+        probes: [],
+      }),
+    );
+
+    expect(connection).toMatchObject({
+      moduleKey: "dealiot",
+      status: "attention",
+      probes: [],
+    });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("uses relative probe paths and probe-specific base URLs", async () => {
+    const fetchMock = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(jsonResponse({ status: "ok" }))
+      .mockResolvedValueOnce(jsonResponse({ status: "ok" }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const connection = await fetchModuleConnection(
+      runtimeConfig({
+        apiBaseUrl: "",
+        authToken: undefined,
+        probes: [
+          {
+            id: "relative",
+            label: "Relative health",
+            path: "healthz",
+          },
+          {
+            id: "gps",
+            label: "GPS health",
+            baseUrl: "https://dealdata-gps.example.test/",
+            path: "/health/ready/",
+          },
+        ],
+      }),
+    );
+
+    expect(connection.status).toBe("online");
+    expect(connection.probes).toMatchObject([
+      {
+        id: "relative",
+        url: "healthz",
+      },
+      {
+        id: "gps",
+        url: "https://dealdata-gps.example.test/health/ready/",
+      },
+    ]);
+  });
+
+  it("summarizes text and empty JSON payloads with HTTP fallback details", async () => {
+    const fetchMock = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(textResponse("plain health response"))
+      .mockResolvedValueOnce(jsonResponse({}));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const connection = await fetchModuleConnection(
+      runtimeConfig({
+        probes: [
+          {
+            id: "text",
+            label: "Text health",
+            path: "/health/text",
+          },
+          {
+            id: "empty-json",
+            label: "Empty JSON health",
+            path: "/health/json",
+          },
+        ],
+      }),
+    );
+
+    expect(connection.status).toBe("online");
+    expect(connection.probes).toMatchObject([
+      {
+        id: "text",
+        status: "online",
+        detail: "HTTP 200",
+      },
+      {
+        id: "empty-json",
+        status: "online",
+        detail: "HTTP 200",
+      },
+    ]);
+  });
+
+  it("classifies database, summary, check and status payload variants", async () => {
+    const fetchMock = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(jsonResponse({ database: "unavailable" }))
+      .mockResolvedValueOnce(jsonResponse({ summary: { unhealthy: 1 } }))
+      .mockResolvedValueOnce(jsonResponse({ summary: { ok: 2, degraded: 1 } }))
+      .mockResolvedValueOnce(jsonResponse({ checks: [{ status: "healthy" }, { status: "failed" }] }))
+      .mockResolvedValueOnce(jsonResponse({ checks: [{ status: "ok" }, { status: "failed" }] }))
+      .mockResolvedValueOnce(jsonResponse({ checks: [{ status: "available" }, { status: "failed" }] }))
+      .mockResolvedValueOnce(jsonResponse({ checks: [{ status: "available" }] }))
+      .mockResolvedValueOnce(jsonResponse({ status: "warning" }))
+      .mockResolvedValueOnce(jsonResponse({ status: "failed" }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const connection = await fetchModuleConnection(
+      runtimeConfig({
+        probes: [
+          {
+            id: "database",
+            label: "Database",
+            path: "/database",
+          },
+          {
+            id: "summary-attention",
+            label: "Summary attention",
+            path: "/summary/attention",
+          },
+          {
+            id: "summary-degraded",
+            label: "Summary degraded",
+            path: "/summary/degraded",
+          },
+          {
+            id: "checks-healthy",
+            label: "Checks healthy",
+            path: "/checks/healthy",
+          },
+          {
+            id: "checks-ok",
+            label: "Checks ok",
+            path: "/checks/ok",
+          },
+          {
+            id: "checks-available",
+            label: "Checks available",
+            path: "/checks/available",
+          },
+          {
+            id: "checks-online",
+            label: "Checks online",
+            path: "/checks/online",
+          },
+          {
+            id: "warning",
+            label: "Warning",
+            path: "/warning",
+          },
+          {
+            id: "failed",
+            label: "Failed",
+            path: "/failed",
+          },
+        ],
+      }),
+    );
+
+    expect(connection.status).toBe("degraded");
+    expect(connection.probes).toMatchObject([
+      {
+        id: "database",
+        status: "attention",
+        detail: "unavailable",
+      },
+      {
+        id: "summary-attention",
+        status: "attention",
+        detail: "1 unhealthy",
+      },
+      {
+        id: "summary-degraded",
+        status: "degraded",
+        detail: "2 ok, 1 degraded",
+      },
+      {
+        id: "checks-healthy",
+        status: "degraded",
+      },
+      {
+        id: "checks-ok",
+        status: "degraded",
+      },
+      {
+        id: "checks-available",
+        status: "degraded",
+      },
+      {
+        id: "checks-online",
+        status: "online",
+      },
+      {
+        id: "warning",
+        status: "degraded",
+        detail: "warning",
+      },
+      {
+        id: "failed",
+        status: "attention",
+        detail: "failed",
+      },
+    ]);
+  });
+
+  it("reports a generic detail for non-Error network failures", async () => {
+    const fetchMock = vi.fn<typeof fetch>().mockRejectedValueOnce("socket reset");
+    vi.stubGlobal("fetch", fetchMock);
+
+    const connection = await fetchModuleConnection(
+      runtimeConfig({
+        probes: [
+          {
+            id: "management-console",
+            label: "Management console",
+            path: "/healthz",
+          },
+        ],
+      }),
+    );
+
+    expect(connection.status).toBe("attention");
+    expect(connection.probes[0]).toMatchObject({
+      status: "attention",
+      detail: "Unknown network error",
     });
   });
 });
